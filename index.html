@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Camera Access Check</title>
+  </head>
+  <body>
+    <h1>Camera Access Checker</h1>
+    <p id="status">Checking camera access...</p>
+    <button id="checkCamera" onclick="checkCameraAccess()">
+      Check Camera Access
+    </button>
+    <video
+      id="cameraFeed"
+      autoplay
+      playsinline
+      style="display: none; width: 100%; max-width: 400px"
+    ></video>
+
+    <script>
+      async function checkCameraAccess() {
+        const statusElement = document.getElementById("status");
+        const cameraFeed = document.getElementById("cameraFeed");
+
+        try {
+          // Check if media devices are supported
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            statusElement.textContent =
+              "Camera access is not supported on this device.";
+            return;
+          }
+
+          // Request camera access
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          statusElement.textContent = "Camera access granted!";
+
+          // Display video feed
+          cameraFeed.style.display = "block";
+          cameraFeed.srcObject = stream;
+        } catch (error) {
+          if (error.name === "NotAllowedError") {
+            statusElement.textContent =
+              "Camera access denied. Please allow access.";
+          } else if (error.name === "NotFoundError") {
+            statusElement.textContent = "No camera found on this device.";
+          } else {
+            statusElement.textContent = `Error: ${error.message}`;
+          }
+        }
+      }
+
+      // Automatically check camera access on page load
+      checkCameraAccess();
+    </script>
+  </body>
+</html>
