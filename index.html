@@ -8,22 +8,21 @@
 <body>
     <h1>Open Camera and Upload Picture</h1>
     <div id="cameraNotFound" style="display:none; color:red;">Camera not found or access denied.</div>
-
+    
     <!-- Hidden file input for camera -->
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
-
+    
     <!-- Visible button to trigger the camera -->
     <button id="uploadButton">Open Camera</button>
-
+    
     <!-- Preview captured image -->
     <img id="previewImage" style="display:none; max-width: 100%;" alt="Captured Image">
-
+    
     <script>
         const uploadButton = document.getElementById('uploadButton');
         const cameraInput = document.getElementById('cameraInput');
         const cameraNotFound = document.getElementById('cameraNotFound');
         const previewImage = document.getElementById('previewImage');
-        const token = 'your_verification_token_here'; // Replace with your actual token
 
         // Check if the device has camera access
         function checkCameraAccess() {
@@ -59,62 +58,10 @@
                 };
                 reader.readAsDataURL(file);
 
-                // Call initializeUploader to validate and upload the file
-                const institutionId = 'your_institution_id_here'; // Replace with the actual institution ID
-                initializeUploader(file, institutionId);
             }
         });
 
-        function initializeUploader(file, institutionId) {
-            const validExtensions = ['jpg', 'jpeg', 'gif', 'png', 'bmp'];
-            const maxFileSize = 12 * 1024 * 1024; // 12 MB
-
-            // Validate file extension
-            const fileExtension = file.name.split('.').pop().toLowerCase();
-            if (!validExtensions.includes(fileExtension)) {
-                alert('Invalid file type. Only images are allowed.');
-                return;
-            }
-
-            // Validate file size
-            if (file.size > maxFileSize) {
-                alert('File is too large. Maximum size is 12 MB.');
-                return;
-            }
-            let token='TSkBCXy3mazy698KmX1xM6MwCT5b4fcj25Lid5oWVZj-zyfuwxwiidFQgU6dslCuSuwhd-yWg74CyPf4wnRsRJTNaEk1'
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('institutionId', 2); 
-            formData.append('__RequestVerificationToken', token); 
-
-            $.ajax({
-                url: '/Media/UploadMediaByAll',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                xhr: function () {
-                    const xhr = new window.XMLHttpRequest();
-                    xhr.upload.addEventListener('progress', function (e) {
-                        if (e.lengthComputable) {
-                            const percentComplete = (e.loaded / e.total) * 100;
-                            console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
-                        }
-                    }, false);
-                    return xhr;
-                },
-                success: function (response) {
-                    const mediaId = response; // Adjust if your server response format is different
-                    document.getElementById('UserMediaId').value = mediaId;
-                    document.getElementById('CustomAttachment1').value = mediaId;
-                    loadMedia('avatar_container', mediaId);
-                    console.log('Upload successful! Media ID:', mediaId);
-                },
-                error: function (xhr, status, error) {
-                    console.error('Upload failed:', xhr.responseText || status || error);
-                }
-            });
-        }
+       
     </script>
 </body>
 </html>
