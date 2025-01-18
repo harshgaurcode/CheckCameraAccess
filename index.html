@@ -1,59 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Camera Access Check</title>
-  </head>
-  <body>
-    <h1>Camera Access Checker</h1>
-    <p id="status">Checking camera access...</p>
-    <button id="checkCamera" onclick="checkCameraAccess()">
-      Check Camera Access
-    </button>
-    <video
-      id="cameraFeed"
-      autoplay
-      playsinline
-      style="display: none; width: 100%; max-width: 400px"
-    ></video>
-
-    <script>
-      async function checkCameraAccess() {
-        const statusElement = document.getElementById("status");
-        const cameraFeed = document.getElementById("cameraFeed");
-
-        try {
-          // Check if media devices are supported
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            statusElement.textContent =
-              "Camera access is not supported on this device.";
-            return;
-          }
-
-          // Request camera access
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-          statusElement.textContent = "Camera access granted!";
-
-          // Display video feed
-          cameraFeed.style.display = "block";
-          cameraFeed.srcObject = stream;
-        } catch (error) {
-          if (error.name === "NotAllowedError") {
-            statusElement.textContent =
-              "Camera access denied. Please allow access.";
-          } else if (error.name === "NotFoundError") {
-            statusElement.textContent = "No camera found on this device.";
-          } else {
-            statusElement.textContent = `Error: ${error.message}`;
-          }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Access and Upload</title>
+    <style>
+        #cameraView, #capturedImage {
+            display: none;
+            max-width: 100%;
         }
-      }
+    </style>
+</head>
+<body>
+    <h1>Capture and Upload Picture</h1>
+    <div id="cameraNotFound" style="display:none; color:red;">Camera not found or access denied.</div>
+    <button id="pickAvatar" style="display:none;">Open Camera</button>
+    <video id="cameraView" autoplay></video>
+    <canvas id="imageCanvas" style="display:none;"></canvas>
+    <img id="capturedImage" alt="Captured Image">
+    <button id="captureButton" style="display:none;">Capture</button>
+    <button id="uploadButton" style="display:none;">Upload</button>
+    <script>
+        const cameraView = document.getElementById('cameraView');
+        const pickAvatar = document.getElementById('pickAvatar');
+        const captureButton = document.getElementById('captureButton');
+        const uploadButton = document.getElementById('uploadButton');
+        const capturedImage = document.getElementById('capturedImage');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const context = imageCanvas.getContext('2d');
+        let stream = null;
 
-      // Automatically check camera access on page load
-      checkCameraAccess();
+        function checkcameraAccess() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                // MediaDevices API not supported
+                document.getElementById('cameraNotFound').style.display = 'block';
+                pickAvatar.style.display = 'none';
+            } else {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function (mediaStream) {
+                        document.getElementById('cameraNotFound').style.display = 'none';
+                        pickAvatar.style.display = 'block';
+                        stream = mediaStream; // Save the stream for later use
+                        pickAvatar.addEventListener('click', startCamera);
+                    })
+                    .catch(function () {
+                        document.getElementById('cameraNotFound').style.display = 'block';
+                        pickAvatar.style.display = 'none';
+                    });
+            }
+        }
+
+        function startCamera() {
+            if (stream) {
+                cameraView.srcObject = stream;
+                cameraView.style.display = 'block';
+                captureButton.style.display = 'block';
+                captureButton.addEventListener('click', captureImage);
+            }
+        }
+
+        function captureImage() {
+            imageCanvas.width = cameraView.videoWidth;
+            imageCanvas.height = cameraView.videoHeight;
+            context.drawImage(cameraView, 0, 0, imageCanvas.width, imageCanvas.height);
+            capturedImage.src = imageCanvas.toDataURL('image/png');
+            capturedImage.style.display = 'block';
+            uploadButton.style.display = 'block';
+            uploadButton.addEventListener('click', uploadImage);
+        }
+
+        function uploadImage() {
+            const dataURL = imageCanvas.toDataURL('image/png');
+            fetch('/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: dataURL }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Image uploaded successfully');
+            })
+            .catch(error => {
+                console.error('Error uploading image:', error);
+            });
+        }
+
+        // Initialize the check
+        checkcameraAccess();
     </script>
-  </body>
+</body>
 </html>
