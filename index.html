@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Upload with Check</title>
+    <title>Camera Upload for iOS</title>
 </head>
 <body>
     <h1>Open Camera and Upload Picture</h1>
@@ -24,26 +24,15 @@
         const cameraNotFound = document.getElementById('cameraNotFound');
         const previewImage = document.getElementById('previewImage');
 
-        // Check if the device has camera access
-        function checkCameraAccess() {
-            return navigator.mediaDevices && navigator.mediaDevices.enumerateDevices
-                ? navigator.mediaDevices.enumerateDevices().then(devices => {
-                      return devices.some(device => device.kind === 'videoinput');
-                  })
-                : Promise.resolve(false); // MediaDevices API not supported
-        }
-
         // Handle upload button click
         uploadButton.addEventListener('click', () => {
-            checkCameraAccess().then(hasCamera => {
-                if (hasCamera) {
-                    // Open the file input for the camera
-                    cameraInput.click();
-                } else {
-                    // Show error if no camera is available
-                    cameraNotFound.style.display = 'block';
-                }
-            });
+            // Simple fallback: assume the device has camera access if `navigator.mediaDevices` is available
+            if (navigator.mediaDevices) {
+                cameraInput.click();
+            } else {
+                // Show error if media devices API is not supported
+                cameraNotFound.style.display = 'block';
+            }
         });
 
         // Handle image selection or capture
