@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Upload for iOS</title>
+    <title>Camera Upload with Check</title>
 </head>
 <body>
     <h1>Open Camera and Upload Picture</h1>
     <div id="cameraNotFound" style="display:none; color:red;">Camera not found or access denied.</div>
+    <div id="cameraError" style="display:none; color:red;"></div>
+    <div id="uploadError" style="display:none; color:red;"></div>
     
     <!-- Hidden file input for camera -->
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
@@ -22,17 +24,45 @@
         const uploadButton = document.getElementById('uploadButton');
         const cameraInput = document.getElementById('cameraInput');
         const cameraNotFound = document.getElementById('cameraNotFound');
+        const cameraError = document.getElementById('cameraError');
+        const uploadError = document.getElementById('uploadError');
         const previewImage = document.getElementById('previewImage');
+
+        // Check if the device has camera access
+        function checkCameraAccess() {
+            cameraError.style.display = 'none'; // Reset previous errors
+            return new Promise((resolve) => {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    cameraError.style.display = 'block';
+                    cameraError.textContent = 'Media devices not supported on this device or browser.';
+                    resolve(false);
+                } else {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function (stream) {
+                            // Stop the stream immediately after checking
+                            stream.getTracks().forEach(track => track.stop());
+                            resolve(true);
+                        })
+                        .catch(function (err) {
+                            cameraError.style.display = 'block';
+                            cameraError.textContent = 'Camera access denied or not available.';
+                            resolve(false);
+                        });
+                }
+            });
+        }
 
         // Handle upload button click
         uploadButton.addEventListener('click', () => {
-            // Simple fallback: assume the device has camera access if `navigator.mediaDevices` is available
-            if (navigator.mediaDevices) {
-                cameraInput.click();
-            } else {
-                // Show error if media devices API is not supported
-                cameraNotFound.style.display = 'block';
-            }
+            checkCameraAccess().then(hasCamera => {
+                if (hasCamera) {
+                    // Open the file input for the camera
+                    cameraInput.click();
+                } else {
+                    // Show error if no camera is available
+                    cameraNotFound.style.display = 'block';
+                }
+            });
         });
 
         // Handle image selection or capture
@@ -48,27 +78,30 @@
                 reader.readAsDataURL(file);
 
                 // Optionally upload the image to the server
-                uploadImage(file);
+                //uploadImage(file);
             }
         });
 
         // Upload image to the server
-        function uploadImage(file) {
-            const formData = new FormData();
-            formData.append('image', file);
+        // function uploadImage(file) {
+        //     uploadError.style.display = 'none'; // Reset previous errors
+        //     const formData = new FormData();
+        //     formData.append('image', file);
 
-            fetch('/upload', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('Image uploaded successfully!');
-            })
-            .catch(error => {
-                console.error('Error uploading image:', error);
-            });
-        }
+        //     fetch('/upload', {
+        //         method: 'POST',
+        //         body: formData,
+        //     })
+        //     .then(response => response.json())
+        //     .then(data => {
+        //         alert('Image uploaded successfully!');
+        //     })
+        //     .catch(error => {
+        //         console.error('Error uploading image:', error);
+        //         uploadError.style.display = 'block';
+        //         uploadError.textContent = 'Error uploading image. Please try again.';
+        //     });
+        // }
     </script>
 </body>
 </html>
