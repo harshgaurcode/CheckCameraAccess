@@ -27,24 +27,30 @@
         // Check if the device has camera access
         function checkCameraAccess() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                return Promise.resolve(false);
+                cameraNotFound.style.display = 'block';
+                uploadButton.style.display = 'none';
+            } else {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function (stream) {
+                        cameraNotFound.style.display = 'none';
+                        uploadButton.style.display = 'block';
+
+                        // Stop the stream immediately after checking
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(function () {
+                        cameraNotFound.style.display = 'block';
+                        uploadButton.style.display = 'none';
+                    });
             }
-            return navigator.mediaDevices.getUserMedia({ video: true })
-                .then(() => true)
-                .catch(() => false);
         }
+
+        // Initialize camera access check on page load
+        checkCameraAccess();
 
         // Handle upload button click
         uploadButton.addEventListener('click', () => {
-            checkCameraAccess().then(hasCamera => {
-                if (hasCamera) {
-                    // Open the file input for the camera
-                    cameraInput.click();
-                } else {
-                    // Show error if no camera is available
-                    cameraNotFound.style.display = 'block';
-                }
-            });
+            cameraInput.click();
         });
 
         // Handle image selection or capture
