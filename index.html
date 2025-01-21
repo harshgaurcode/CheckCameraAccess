@@ -26,11 +26,12 @@
 
         // Check if the device has camera access
         function checkCameraAccess() {
-            return navigator.mediaDevices && navigator.mediaDevices.enumerateDevices
-                ? navigator.mediaDevices.enumerateDevices().then(devices => {
-                      return devices.some(device => device.kind === 'videoinput');
-                  })
-                : Promise.resolve(false); // MediaDevices API not supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return Promise.resolve(false);
+            }
+            return navigator.mediaDevices.getUserMedia({ video: true })
+                .then(() => true)
+                .catch(() => false);
         }
 
         // Handle upload button click
