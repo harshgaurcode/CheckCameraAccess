@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Upload with Check</title>
+    <title>Camera Upload with Resize</title>
 </head>
 <body>
     <h1>Open Camera and Upload Picture</h1>
     <div id="cameraNotFound" style="display:none; color:red;">Camera not found or access denied.</div>
-    
+
     <!-- Hidden file input for camera -->
     <input type="file" id="cameraInput" accept="image/*" capture="user" style="display:none;">
-    
+
     <!-- Visible button to trigger the camera -->
     <button id="uploadButton">Open Camera</button>
-    
+
     <!-- Preview captured image -->
     <img id="previewImage" style="display:none; max-width: 100%;" alt="Captured Image">
-    
+
     <script>
         const uploadButton = document.getElementById('uploadButton');
         const cameraInput = document.getElementById('cameraInput');
@@ -50,18 +50,38 @@
         cameraInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
-                // Preview the captured image
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImage.src = e.target.result;
-                    previewImage.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
 
+                reader.onload = (e) => {
+                    const img = new Image();
+
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // Set canvas dimensions to 512x512
+                        canvas.width = 512;
+                        canvas.height = 512;
+
+                        // Draw and resize the image
+                        ctx.drawImage(img, 0, 0, 512, 512);
+
+                        // Convert the canvas to a Data URL
+                        const resizedImageURL = canvas.toDataURL('image/jpeg');
+
+                        // Display the resized image
+                        previewImage.src = resizedImageURL;
+                        previewImage.style.display = 'block';
+                    };
+
+                    // Load the image for resizing
+                    img.src = e.target.result;
+                };
+
+                // Read the file to trigger the onload event
+                reader.readAsDataURL(file);
             }
         });
-
-       
     </script>
 </body>
 </html>
