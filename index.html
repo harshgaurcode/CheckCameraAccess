@@ -4,18 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera Upload with Resize</title>
-    <style>
-        #loader {
-            display: none;
-            color: blue;
-            margin-top: 10px;
-        }
-    </style>
 </head>
 <body>
     <h1>Open Camera and Upload Picture</h1>
     <div id="cameraNotFound" style="display:none; color:red;">Camera not found or access denied.</div>
-    <div id="loader">Processing image...</div>
 
     <!-- Hidden file input for camera -->
     <input type="file" id="cameraInput" accept="image/*" capture="user" style="display:none;">
@@ -31,40 +23,27 @@
         const cameraInput = document.getElementById('cameraInput');
         const cameraNotFound = document.getElementById('cameraNotFound');
         const previewImage = document.getElementById('previewImage');
-        const loader = document.getElementById('loader');
-        let hasCameraAccess = false;
 
-        // Check if the device has camera access on page load
+        // Check if camera access is available
         function checkCameraAccess() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                hasCameraAccess = false;
                 cameraNotFound.style.display = 'block';
-                uploadButton.style.display = 'none';
+                uploadButton.disabled = true; // Disable upload button if no camera
             } else {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(stream => {
-                        hasCameraAccess = true;
-                        cameraNotFound.style.display = 'none';
-                        uploadButton.style.display = 'block';
-                        stream.getTracks().forEach(track => track.stop());
-                    })
-                    .catch(() => {
-                        hasCameraAccess = false;
-                        cameraNotFound.style.display = 'block';
-                        uploadButton.style.display = 'none';
-                    });
+                cameraNotFound.style.display = 'none';
+                uploadButton.disabled = false; // Enable upload button if camera is accessible
             }
         }
 
-        // Call camera check on page load
+        // Perform camera access check on page load
         checkCameraAccess();
 
         // Handle upload button click
         uploadButton.addEventListener('click', () => {
-            if (hasCameraAccess) {
-                cameraInput.click();
-            } else {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 cameraNotFound.style.display = 'block';
+            } else {
+                cameraInput.click();
             }
         });
 
@@ -72,11 +51,11 @@
         cameraInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
-                loader.style.display = 'block'; // Show loader
                 const reader = new FileReader();
 
                 reader.onload = (e) => {
                     const img = new Image();
+
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
@@ -94,12 +73,13 @@
                         // Display the resized image
                         previewImage.src = resizedImageURL;
                         previewImage.style.display = 'block';
-                        loader.style.display = 'none'; // Hide loader
                     };
 
+                    // Load the image for resizing
                     img.src = e.target.result;
                 };
 
+                // Read the file to trigger the onload event
                 reader.readAsDataURL(file);
             }
         });
