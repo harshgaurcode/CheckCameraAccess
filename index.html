@@ -26,31 +26,33 @@
 
         // Check if the device has camera access
         function checkCameraAccess() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                cameraNotFound.style.display = 'block';
-                uploadButton.style.display = 'none';
-            } else {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(function (stream) {
-                        cameraNotFound.style.display = 'none';
-                        uploadButton.style.display = 'block';
-
-                        // Stop the stream immediately after checking
-                        stream.getTracks().forEach(track => track.stop());
-                    })
-                    .catch(function () {
-                        cameraNotFound.style.display = 'block';
-                        uploadButton.style.display = 'none';
-                    });
-            }
+            return new Promise((resolve) => {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    resolve(false);
+                } else {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function (stream) {
+                            // Stop the stream immediately after checking
+                            stream.getTracks().forEach(track => track.stop());
+                            resolve(true);
+                        })
+                        .catch(function () {
+                            resolve(false);
+                        });
+                }
+            });
         }
-
-        // Initialize camera access check on page load
-        checkCameraAccess();
 
         // Handle upload button click
         uploadButton.addEventListener('click', () => {
-            cameraInput.click();
+            checkCameraAccess().then(hasCamera => {
+                if (hasCamera) {
+                    cameraNotFound.style.display = 'none';
+                    cameraInput.click();
+                } else {
+                    cameraNotFound.style.display = 'block';
+                }
+            });
         });
 
         // Handle image selection or capture
