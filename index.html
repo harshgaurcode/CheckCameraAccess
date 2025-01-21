@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera Upload with Resize</title>
+    <style>
+        #loader {
+            display: none;
+            color: blue;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>Open Camera and Upload Picture</h1>
     <div id="cameraNotFound" style="display:none; color:red;">Camera not found or access denied.</div>
+    <div id="loader">Processing image...</div>
 
     <!-- Hidden file input for camera -->
     <input type="file" id="cameraInput" accept="image/*" capture="user" style="display:none;">
@@ -23,47 +31,52 @@
         const cameraInput = document.getElementById('cameraInput');
         const cameraNotFound = document.getElementById('cameraNotFound');
         const previewImage = document.getElementById('previewImage');
+        const loader = document.getElementById('loader');
+        let hasCameraAccess = false;
 
-        // Check if the device has camera access
+        // Check if the device has camera access on page load
         function checkCameraAccess() {
-            return new Promise((resolve) => {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    resolve(false);
-                } else {
-                    navigator.mediaDevices.getUserMedia({ video: true })
-                        .then(function (stream) {
-                            // Stop the stream immediately after checking
-                            stream.getTracks().forEach(track => track.stop());
-                            resolve(true);
-                        })
-                        .catch(function () {
-                            resolve(false);
-                        });
-                }
-            });
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                hasCameraAccess = false;
+                cameraNotFound.style.display = 'block';
+                uploadButton.style.display = 'none';
+            } else {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        hasCameraAccess = true;
+                        cameraNotFound.style.display = 'none';
+                        uploadButton.style.display = 'block';
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(() => {
+                        hasCameraAccess = false;
+                        cameraNotFound.style.display = 'block';
+                        uploadButton.style.display = 'none';
+                    });
+            }
         }
+
+        // Call camera check on page load
+        checkCameraAccess();
 
         // Handle upload button click
         uploadButton.addEventListener('click', () => {
-            checkCameraAccess().then(hasCamera => {
-                if (hasCamera) {
-                    cameraNotFound.style.display = 'none';
-                    cameraInput.click();
-                } else {
-                    cameraNotFound.style.display = 'block';
-                }
-            });
+            if (hasCameraAccess) {
+                cameraInput.click();
+            } else {
+                cameraNotFound.style.display = 'block';
+            }
         });
 
         // Handle image selection or capture
         cameraInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
+                loader.style.display = 'block'; // Show loader
                 const reader = new FileReader();
 
                 reader.onload = (e) => {
                     const img = new Image();
-
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
@@ -81,13 +94,12 @@
                         // Display the resized image
                         previewImage.src = resizedImageURL;
                         previewImage.style.display = 'block';
+                        loader.style.display = 'none'; // Hide loader
                     };
 
-                    // Load the image for resizing
                     img.src = e.target.result;
                 };
 
-                // Read the file to trigger the onload event
                 reader.readAsDataURL(file);
             }
         });
