@@ -23,6 +23,8 @@
         const cameraInput = document.getElementById('cameraInput');
         const cameraNotFound = document.getElementById('cameraNotFound');
         const previewImage = document.getElementById('previewImage');
+          const maxFileSize = 12 * 1024 * 1024; // 12 MB
+        const validExtensions = ['jpg', 'jpeg', 'png', 'gif']; // Allowed file types
 
         // Check if camera access is available
         function checkCameraAccess() {
@@ -50,6 +52,21 @@
         // Handle image selection or capture
         cameraInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
+            
+             const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                // Validate file extension
+                if (!validExtensions.includes(fileExtension)) {
+                    $('#imageValidation').append('<label class="image-error text-danger">Invalid file type. Only images are allowed.</label>');
+                    return;
+                }
+
+                // Validate file size
+                if (file.size > maxFileSize) {
+                    $('#imageValidation').append('<label class="image-error text-danger">File is too large. Maximum size is 12 MB.</label>');
+                    return;
+                }
+            
             if (file) {
                 const reader = new FileReader();
 
