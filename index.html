@@ -32,9 +32,31 @@
                 cameraNotFound.style.display = 'block';
                 uploadButton.disabled = true; // Disable upload button if no camera
             } else {
+            // Try to access the camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                // Camera access is available
                 cameraNotFound.style.display = 'none';
                 uploadButton.disabled = false; // Enable upload button if camera is accessible
+
+                // Stop the stream immediately after checking to release camera
+                stream.getTracks().forEach(track => track.stop());
+            })
+            .catch(function(err) {
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    // Camera access was denied by the user
+                    cameraNotFound.style.display = 'block';
+                    cameraNotFound.textContent = "Camera access denied. Please enable camera permission.";
+                    uploadButton.disabled = true; // Disable upload button if camera access is denied
+                } else {
+                    // Handle other errors (e.g., no camera found)
+                    cameraNotFound.style.display = 'block';
+                    cameraNotFound.textContent = "No camera found.";
+                    uploadButton.disabled = true; // Disable upload button if camera is unavailable
+                }
+            });
             }
+            
         }
 
         // Perform camera access check on page load
